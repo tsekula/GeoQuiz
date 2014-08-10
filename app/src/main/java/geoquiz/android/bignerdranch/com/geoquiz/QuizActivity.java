@@ -1,6 +1,7 @@
 package geoquiz.android.bignerdranch.com.geoquiz;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -29,6 +30,7 @@ public class QuizActivity extends Activity {
     private Button mCheatButton;
     private TextView mQuestionTextView;
     private int mCurrentIndex=0;
+    private boolean mIsCheater;
 
     private TrueFalse[] mQuestionBank = new TrueFalse[] {
             new TrueFalse(R.string.question_oceans, true),
@@ -56,7 +58,7 @@ public class QuizActivity extends Activity {
 
         updateQuestion();
 
-        /* wire-up click actions for buttons */
+        /* ####  BUTTON:: Previous */
         mPreviousButton = (Button)findViewById(R.id.previous_button);
         mPreviousButton.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -67,24 +69,32 @@ public class QuizActivity extends Activity {
                 }
             }
         });
+
+        /* ####  BUTTON:: Next */
         mNextButton = (Button)findViewById(R.id.next_button);
         mNextButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 mCurrentIndex = (mCurrentIndex+1) % mQuestionBank.length;
+                mIsCheater=false;
                 updateQuestion();
             }
         });
 
+        /* ####  BUTTON:: Cheat */
         mCheatButton = (Button)findViewById(R.id.cheat_button);
         mCheatButton.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
                 // start CheatActivity
-
+                Intent i = new Intent(QuizActivity.this, CheatActivity.class);
+                boolean answerIsTrue = mQuestionBank[mCurrentIndex].isTrueQuestion();
+                i.putExtra(CheatActivity.EXTRA_ANSWER_IS_TRUE, answerIsTrue);
+                startActivityForResult(i, 0);
             }
         });
 
+        /* ####  BUTTON:: True */
         mTrueButton = (Button)findViewById(R.id.true_button);
         // add event listener to button
         mTrueButton.setOnClickListener(new View.OnClickListener() {
@@ -95,6 +105,7 @@ public class QuizActivity extends Activity {
 
         });
 
+        /* ####  BUTTON:: False */
         mFalseButton = (Button)findViewById(R.id.false_button);
         mFalseButton.setOnClickListener(new View.OnClickListener(){
             @Override
@@ -147,18 +158,34 @@ public class QuizActivity extends Activity {
     private void checkAnswer(boolean userPressedTrue){
         int messageResID=0;
 
-        if (userPressedTrue=mQuestionBank[mCurrentIndex].isTrueQuestion()){
-            /* answered correctly */
-            messageResID=R.string.correct_toast;
+        if (mIsCheater) {
+            messageResID=R.string.judgement_toast;
         }
         else {
+            if (userPressedTrue=mQuestionBank[mCurrentIndex].isTrueQuestion()){
+            /* answered correctly */
+                messageResID=R.string.correct_toast;
+            }
+            else {
             /* answered incorrectly */
-            messageResID=R.string.incorrect_toast;
+                messageResID=R.string.incorrect_toast;
+            }
         }
 
         Toast.makeText(QuizActivity.this, messageResID, Toast.LENGTH_SHORT).show();
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (data==null)
+            return;
+        mIsCheater = data.getBooleanExtra(CheatActivity.EXTRA_ANSWER_SHOWN,false);
+
+    }
+
+    /* ############################################## */
+    /*          Logging Tests
+    /* ############################################## */
     @Override
     public void onStart() {
         super.onStart();

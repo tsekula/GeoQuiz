@@ -19,5 +19,5 @@
         <activity android:name=".CheatActivity"
                   android:label="@string/app_name"/>
     </application>
-// get some
+
 </manifest>
